@@ -31,23 +31,24 @@ class MyApp extends StatelessWidget {
               const AppBarTheme(color: Color.fromARGB(255, 16, 99, 166))),
       debugShowCheckedModeBanner: false,
       home: StreamBuilder<User?>(
-          stream: FirebaseAuth.instance.authStateChanges(),
-          builder: (context, snapshot) {
-            //if statement in the bellow check if user loged in
-            if (snapshot.connectionState == ConnectionState.waiting) {
-              return const CircularProgressIndicator();
-            } else if (snapshot.hasError) {
-              return Text('Error: ${snapshot.error}');
+        stream: FirebaseAuth.instance.authStateChanges(),
+        builder: (context, snapshot) {
+          //if statement in the bellow check if user loged in
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const CircularProgressIndicator();
+          } else if (snapshot.hasError) {
+            return Text('Error: ${snapshot.error}');
+          } else {
+            if (snapshot.hasData && snapshot.data != null) {
+              // User is logged in
+              return HomePage();
             } else {
-              if (snapshot.hasData && snapshot.data != null) {
-                // User is logged in
-                return HomePage();
-              } else {
-                // User is not logged in
-                return LoginPage();
-              }
+              // User is not logged in
+              return LoginPage();
             }
-          }),
+          }
+        },
+      ),
     );
   }
 }
