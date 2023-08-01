@@ -66,19 +66,21 @@ class _BusCardState extends State<BusCard> {
                 const VerticalDivider(
                   thickness: 2,
                 ),
-                IconButton(
-                  onPressed: () async {
-                    await FireStoreMethods().likeDestination(
-                        widget.snap["destinationId"],
-                        FirebaseAuth.instance.currentUser!.uid,
-                        widget.snap["likes"]);
-                  },
-                  icon: Icon(
-                    widget.snap["likes"]
-                            .contains(FirebaseAuth.instance.currentUser?.uid)
-                        ? Icons.favorite
-                        : Icons.favorite_border,
-                    color: Colors.red,
+                Expanded(
+                  child: IconButton(
+                    onPressed: () async {
+                      await FireStoreMethods().likeDestination(
+                          widget.snap["destinationId"],
+                          FirebaseAuth.instance.currentUser!.uid,
+                          widget.snap["likes"]);
+                    },
+                    icon: Icon(
+                      widget.snap["likes"]
+                              .contains(FirebaseAuth.instance.currentUser?.uid)
+                          ? Icons.favorite
+                          : Icons.favorite_border,
+                      color: Colors.red,
+                    ),
                   ),
                 ),
               ],

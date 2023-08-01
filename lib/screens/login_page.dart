@@ -33,6 +33,7 @@ class _LoginPageState extends State<LoginPage> {
     if (res != "success") {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
+          backgroundColor: Colors.red,
           content: Text("Email veya Şifre yanlış Girilmiştir"),
         ),
       );

@@ -15,7 +15,7 @@ class AuthMethods {
       required String lastName,
       required String position,
       String? carPlate,
-      var likedDestination,
+      var likedDestinations,
       String? userAddress}) async {
     String res = "Beklenmedik bir hata oluştu !";
     try {
@@ -46,9 +46,9 @@ class AuthMethods {
       }
     } on FirebaseAuthException catch (err) {
       if (err.code == "invalid-email") {
-        res = "Email is badly formatted";
+        res = "Email formatı yanlış";
       } else if (err.code == "weak-password") {
-        res = "Your password must be at least 6 characters";
+        res = "Şifreniz en az 6 karakter içermelidir";
       }
     } catch (err) {
       res = err.toString();

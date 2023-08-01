@@ -1,5 +1,7 @@
 // import 'dart:convert';
 
+import 'dart:async';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:demo_app/models/destination_model.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -44,7 +46,7 @@ class FireStoreMethods {
           "likes": FieldValue.arrayRemove([userID])
         });
         await _firestore.collection("users").doc(userID).update({
-          "likedDestination":
+          "likedDestinations":
               FieldValue.arrayRemove([destinationSnap["sabah"]["name"]])
         });
       } else {
@@ -52,7 +54,7 @@ class FireStoreMethods {
           "likes": FieldValue.arrayUnion([userID])
         });
         await _firestore.collection("users").doc(userID).update({
-          "likedDestination":
+          "likedDestinations":
               FieldValue.arrayUnion([destinationSnap["sabah"]["name"]])
         });
       }
@@ -157,13 +159,14 @@ class FireStoreMethods {
   }
 
   // **************************************************
-  Future updateLocationFirestore(double lat, double long) async {
+  Future updateLocationFirestore(
+      double lat, double long, bool istracking) async {
     final CollectionReference _collectionRef =
         FirebaseFirestore.instance.collection('location');
-    // print("${_auth.currentUser!.uid}: updateLocationFirestore");
     Map<String, dynamic> json = {
       "latitude": lat,
       "longtitude": long,
+      "istracking": istracking,
     };
     _collectionRef.doc(_auth.currentUser!.uid).set(json).then((_) {
       print("Document updated successfully!");
@@ -205,6 +208,23 @@ class FireStoreMethods {
     }
   }
 
+  Future updateIstracingFirestore(bool istracking) async {
+    final CollectionReference _collectionRef =
+        FirebaseFirestore.instance.collection('location');
+    Map<String, dynamic> json = {
+      "istracking": istracking,
+    };
+    _collectionRef
+        .doc(_auth.currentUser!.uid)
+        .update(json)
+        .then(() {
+          print("Document updated successfully!");
+        } as FutureOr Function(void value))
+        .catchError((error) {
+      print("Error updating document: $error");
+    });
+  }
+
   //*****************************************************************
   Future<String> getDriverIdByRouteName(String docId, String routeName) async {
     try {
@@ -215,7 +235,6 @@ class FireStoreMethods {
       if (documentSnapshot.exists) {
         final data = documentSnapshot.data();
         final driverId = data!["destinationId"] as String;
-        // print("SSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSS $driverId");
 
         return driverId;
       } else {
