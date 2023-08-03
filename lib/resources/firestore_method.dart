@@ -1,23 +1,25 @@
-// import 'dart:convert';
+// >>>>>> Author: Berke Gürel, Sadık EĞRİ, Mehmet Enes BİLGİN <<<<<<<
 
+// Importing required packages
 import 'dart:async';
-
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:demo_app/models/destination_model.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:google_maps_flutter/google_maps_flutter.dart';
-import 'package:location/location.dart';
 
+// FireStoreMethods class for Firestore operations
 class FireStoreMethods {
-  String collectionNameForMaps = "Maps";
-  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-  final FirebaseAuth _auth = FirebaseAuth.instance;
-  var userData = {};
+  String collectionNameForMaps = "Maps"; // Collection name for map routes
+  final FirebaseFirestore _firestore =
+      FirebaseFirestore.instance; // Firestore instance
+  final FirebaseAuth _auth =
+      FirebaseAuth.instance; // Firebase Authentication instance
+  var userData = {}; // Placeholder for user data
 
+  // Method to get user data (currently empty, may be used to fetch user data from Firestore)
   void getData() async {
-    //get user data
+    // Implementation of getting user data from Firestore
   }
 
+  // Method to update user information in the database
   Future<void> updateUser(String name, String lastName, String? address,
       String email, String? carPlate) async {
     try {
@@ -26,36 +28,38 @@ class FireStoreMethods {
         "lastName": lastName,
         "address": address,
         "email": email,
-        "vehiclePlate": carPlate
+        "vehiclePlate": carPlate,
       });
     } catch (e) {
       print(e);
     }
   }
 
+  // Method to handle liking/unliking a destination by the user
   Future<void> likeDestination(
       String destinationID, String userID, List likes) async {
     try {
       var destinationData =
           await _firestore.collection("Maps").doc(destinationID).get();
-
       var destinationSnap = destinationData.data() as Map<String, dynamic>;
 
       if (likes.contains(userID)) {
+        // User already liked the destination, so unlike it
         await _firestore.collection("Maps").doc(destinationID).update({
-          "likes": FieldValue.arrayRemove([userID])
+          "likes": FieldValue.arrayRemove([userID]),
         });
         await _firestore.collection("users").doc(userID).update({
           "likedDestinations":
-              FieldValue.arrayRemove([destinationSnap["sabah"]["name"]])
+              FieldValue.arrayRemove([destinationSnap["sabah"]["name"]]),
         });
       } else {
+        // User did not like the destination, so like it
         await _firestore.collection("Maps").doc(destinationID).update({
-          "likes": FieldValue.arrayUnion([userID])
+          "likes": FieldValue.arrayUnion([userID]),
         });
         await _firestore.collection("users").doc(userID).update({
           "likedDestinations":
-              FieldValue.arrayUnion([destinationSnap["sabah"]["name"]])
+              FieldValue.arrayUnion([destinationSnap["sabah"]["name"]]),
         });
       }
     } catch (err) {
@@ -63,22 +67,19 @@ class FireStoreMethods {
     }
   }
 
-//************************************************************ */
-  // Same function will be used for update
-
+  // Method to upload a new route or update an existing route in the Firestore database
   Future<void> uploadRoute(
-      String name,
-      // String driverName,
-      String phone,
-      // String NumberPlate,
-      List<dynamic> konum,
-      bool morning,
-      bool evening) async {
+    String name,
+    String phone,
+    List<dynamic> konum,
+    bool morning,
+    bool evening,
+  ) async {
+    // Fetching user data from Firestore to use in the route information
     var userSnap = await FirebaseFirestore.instance
         .collection("users")
         .doc(FirebaseAuth.instance.currentUser!.uid)
         .get();
-
     userData = userSnap.data()!;
 
     try {
@@ -88,6 +89,7 @@ class FireStoreMethods {
           .doc(_auth.currentUser!.uid)
           .get();
 
+      // Determine the format of the route JSON based on morning and evening flags
       if (morning && !evening) {
         json = {
           "destinationId": _auth.currentUser!.uid,
@@ -98,19 +100,19 @@ class FireStoreMethods {
             "phone": phone,
             "numberPlate": userData["vehiclePlate"],
             "locations": konum,
-          }
+          },
         };
       } else if (evening && !morning) {
         json = {
           "likes": [],
+          "destinationId": _auth.currentUser!.uid,
           "akşam": {
-            "destinationId": _auth.currentUser!.uid,
             "name": name,
             "driverName": "${userData["name"]} ${userData["lastName"]}",
             "phone": phone,
             "numberPlate": userData["vehiclePlate"],
             "locations": konum,
-          }
+          },
         };
       } else {
         json = {
@@ -129,28 +131,31 @@ class FireStoreMethods {
             "phone": phone,
             "numberPlate": userData["vehiclePlate"],
             "locations": konum,
-          }
+          },
         };
       }
 
       if (snapshot.exists) {
+        // If the document already exists, update the route information
         await FirebaseFirestore.instance
             .collection(collectionNameForMaps)
             .doc(_auth.currentUser!.uid)
             .update(json);
       } else {
+        // If the document does not exist, create a new one with the route information
         final docRoute = FirebaseFirestore.instance
             .collection(collectionNameForMaps)
             .doc(_auth.currentUser!.uid);
-
         await docRoute.set(json);
       }
+
       print("Route update/upload successful!");
     } catch (e) {
       print("Error updating/uploading route: $e");
     }
   }
 
+  // Method to delete a route from the Firestore database
   Future deleteRoute(String name) async {
     await FirebaseFirestore.instance
         .collection(collectionNameForMaps)
@@ -158,7 +163,7 @@ class FireStoreMethods {
         .delete();
   }
 
-  // **************************************************
+  // Method to update the driver's location in the database
   Future updateLocationFirestore(
       double lat, double long, bool istracking) async {
     final CollectionReference _collectionRef =
@@ -175,57 +180,21 @@ class FireStoreMethods {
     });
   }
 
-  Future<LatLng?> getLocationFirestore(String documentId) async {
-    try {
-      // Access the Firestore collection and document using the provided documentId
-      DocumentSnapshot<Map<String, dynamic>> snapshot =
-          await FirebaseFirestore.instance
-              .collection('location') // Specify the collection name
-              .doc(documentId) // Specify the document ID
-              .get();
-
-      // Check if the document exists
-      if (snapshot.exists) {
-        // Get the data from the document
-        Map<String, dynamic> data = snapshot.data()!;
-
-        // Extract the latitude and longitude values from the data
-        double latitude = data['latitude'] as double;
-        double longitude = data['longitude'] as double;
-
-        // Create a LatLng object with the retrieved latitude and longitude
-        LatLng locationLatLng = LatLng(latitude, longitude);
-
-        return locationLatLng;
-      } else {
-        // Document not found, return null or handle the case accordingly
-        return null;
-      }
-    } catch (e) {
-      // Handle any errors that may occur during the Firestore read operation
-      print('Error getting location from Firestore: $e');
-      return null;
-    }
-  }
-
+  // Method to update the istracking flag in the database
   Future updateIstracingFirestore(bool istracking) async {
     final CollectionReference _collectionRef =
         FirebaseFirestore.instance.collection('location');
     Map<String, dynamic> json = {
       "istracking": istracking,
     };
-    _collectionRef
-        .doc(_auth.currentUser!.uid)
-        .update(json)
-        .then(() {
-          print("Document updated successfully!");
-        } as FutureOr Function(void value))
-        .catchError((error) {
+    _collectionRef.doc(_auth.currentUser!.uid).update(json).then((_) {
+      print("Document updated successfully!");
+    }).catchError((error) {
       print("Error updating document: $error");
     });
   }
 
-  //*****************************************************************
+  // Method to get the driver's ID (destinationId) by route name (docId) from the Firestore
   Future<String> getDriverIdByRouteName(String docId, String routeName) async {
     try {
       final firebase = FirebaseFirestore.instance;
